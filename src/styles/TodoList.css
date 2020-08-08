@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+.TodoList {
+  list-style-type: none;
+  padding-left: 0px;
+}
+
+.TodoList__li {
+  display: inline-block;
+  width: 100%;
+  font-family: 'Roboto', sans-serif;
+}
+
+.TodoList__li__label {
+}
+
+.TodoList__li--finished {
+  text-decoration: line-through;
+}
