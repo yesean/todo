@@ -4,5 +4,6 @@
 }
 
 .TodoInputForm__input {
-  margin: auto 5px;
+  margin: auto 15px;
+  text-align: center;
 }

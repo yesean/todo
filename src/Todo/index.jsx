@@ -37,8 +37,8 @@ const Todo = () => {
 
   const finishTodo = (finishedTodo) => {
     finishedTodo.finished = !finishedTodo.finished;
-    const finishedTodoList = todoList.filter(todo => todo.finished)
-    const unfinishedTodoList = todoList.filter(todo => !todo.finished)
+    const finishedTodoList = todoList.filter((todo) => todo.finished);
+    const unfinishedTodoList = todoList.filter((todo) => !todo.finished);
     setTodoList([...finishedTodoList, ...unfinishedTodoList]);
   };
 

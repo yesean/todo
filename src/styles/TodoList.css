@@ -2,16 +2,20 @@
 
 .TodoList {
   list-style-type: none;
-  padding-left: 0px;
+  padding: 0px;
+  width: 100%;
 }
 
 .TodoList__li {
-  display: inline-block;
-  width: 100%;
   font-family: 'Roboto', sans-serif;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
 }
 
-.TodoList__li__label {
+.TodoList__li:hover {
+  background-color: #ddd;
+  cursor: pointer;
 }
 
 .TodoList__li--finished {

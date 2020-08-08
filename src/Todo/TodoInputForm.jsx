@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import './../styles/TodoInputForm.css';
 
-import { Input, Button } from '@material-ui/core';
-// import 'fontsource-roboto';
+import { Input } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles({
+  input: {
+    textAlign: 'center',
+  },
+});
 
 const TodoInputForm = (props) => {
+  const classes = useStyles();
   const [todoInput, setTodoInputForm] = useState('');
 
   const handleChange = (e) => {
@@ -15,7 +22,7 @@ const TodoInputForm = (props) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (todoInput.length > 0) {
-      props.addTodo({todo: todoInput, finished: false});
+      props.addTodo({ todo: todoInput, finished: false });
       setTodoInputForm('');
     }
   };
@@ -23,16 +30,13 @@ const TodoInputForm = (props) => {
   return (
     <form className="TodoInputForm" onSubmit={handleSubmit}>
       <Input
-        className="TodoInputForm__input"
+        classes={{ input: classes.input }}
         type="text"
         name="todoInput"
         placeholder="Enter Todo"
         value={todoInput}
         onChange={handleChange}
       />
-      <Button type="submit" variant="contained" color="primary" disableElevation>
-        Enter
-      </Button>
     </form>
   );
 };
