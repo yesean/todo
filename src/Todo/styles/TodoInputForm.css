@@ -1,6 +1,7 @@
 .TodoInputForm {
   display: flex;
   justify-content: center;
+  margin: 40px 20px;
 }
 
 .TodoInputForm__input {

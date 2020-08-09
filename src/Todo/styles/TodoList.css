@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+.TodoList {
+  list-style-type: none;
+  padding: 0px;
+  margin: 20px;
+  width: calc(100vw - 40px);
+  max-width: 600px;
+  height: calc(75vh - 40px - 100px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.TodoList__li {
+  font-family: 'Roboto', sans-serif;
+  padding: auto 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin: 5px auto;
+}
+
+.TodoList__li:hover,
+.TodoList__li:active {
+  background-color: #90a4ae;
+  cursor: pointer;
+}
+
+.TodoList__li--finished {
+  text-decoration: line-through;
+}
