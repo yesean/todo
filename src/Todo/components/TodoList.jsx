@@ -1,21 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './../styles/TodoList.css';
 import {
   TextField,
   IconButton,
   Checkbox,
+  Tooltip,
   makeStyles,
 } from '@material-ui/core/';
 import DeleteIcon from '@material-ui/icons/Delete';
 import clsx from 'clsx';
+import { format, compareAsc } from 'date-fns';
 
 const useStyles = makeStyles({
   Checkbox: {
     padding: 12,
   },
   TextField: {
-    width: 'calc(90vw - 136px)',
-    maxWidth: '500px',
+    maxWidth: 500,
     margin: 0,
   },
   TextField__input: {
@@ -23,10 +24,19 @@ const useStyles = makeStyles({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    height: 50,
+    padding: 0,
+  },
+  Tooltip: {
+    fontSize: 16,
+    opacity: 1,
   },
 });
 
 const TodoList = (props) => {
+  const [isSecondaryTooltipShowing, setIsSecondaryTooltipShowing] = useState(
+    false
+  );
   const classes = useStyles();
 
   const handleEditTodo = (e, todo) => {
@@ -38,9 +48,11 @@ const TodoList = (props) => {
     props.toggleTodo(todo);
   };
 
-  const handleSubmitTodo = (e) => {
+  const handleSubmitTodo = (e, todo) => {
     e.preventDefault();
-    document.activeElement.blur();
+    if (!todo.duplicate) {
+      document.activeElement.blur();
+    }
   };
 
   const handleDeleteTodo = (e, todo) => {
@@ -48,46 +60,82 @@ const TodoList = (props) => {
     props.removeTodo(todo);
   };
 
+  const TodoListStyle = {
+    height:
+      0.75 * window.innerHeight -
+      140 -
+      ((0.75 * window.innerHeight - 140) % 50),
+  };
+
+  const generateTodoTooltip = (todo) => {
+    return <p>Due: {format(todo.dueDate, 'MM/dd/yyyy')}</p>;
+  };
+
   return (
-    <ul className="TodoList">
+    <ul className="TodoList" style={TodoListStyle}>
       {props.todoList.map((todo) => (
-        <li
-          key={todo.dateCreated}
-          className={clsx(
-            'TodoList__li',
-            todo.finished && 'TodoList__li--finished'
-          )}
-          onClick={(e) => handleToggleTodo(e, todo)}
+        <Tooltip
+          key={todo.id}
+          title={isSecondaryTooltipShowing ? '' : generateTodoTooltip(todo)}
+          classes={{ tooltip: classes.Tooltip }}
         >
-          <Checkbox
-            id={todo.todo}
-            classes={{ root: classes.Checkbox }}
-            name="todo"
-            color="primary"
-            checked={todo.finished}
-          />
-          <form onSubmit={handleSubmitTodo}>
-            <TextField
-              type="text"
-              classes={{ root: classes.TextField }}
-              value={todo.todo}
-              onChange={(e) => handleEditTodo(e, todo)}
-              onClick={(e) => e.stopPropagation()}
-              InputProps={{
-                disableUnderline: !todo.duplicate,
-                classes: { input: classes.TextField__input },
-              }}
-              error={todo.duplicate}
-            />
-          </form>
-          <IconButton
-            color="secondary"
-            aria-label="delete"
-            onClick={(e) => handleDeleteTodo(e, todo)}
+          <li
+            key={todo.id}
+            className={clsx(
+              'TodoList__li',
+              todo.finished && 'TodoList__li--finished'
+            )}
+            onClick={(e) => handleToggleTodo(e, todo)}
           >
-            <DeleteIcon />
-          </IconButton>
-        </li>
+            <Tooltip
+              title="Complete Todo"
+              onOpen={() => setIsSecondaryTooltipShowing(true)}
+              onClose={() => setIsSecondaryTooltipShowing(false)}
+            >
+              <Checkbox
+                id={todo.content}
+                classes={{ root: classes.Checkbox }}
+                name="todo"
+                color="primary"
+                checked={todo.finished}
+              />
+            </Tooltip>
+
+            <form
+              className="TodoList__li__form"
+              onSubmit={(e) => handleSubmitTodo(e, todo)}
+            >
+              <TextField
+                classes={{ root: classes.TextField }}
+                value={todo.content}
+                onChange={(e) => handleEditTodo(e, todo)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: `${todo.content.length + 5}ch`,
+                }}
+                InputProps={{
+                  disableUnderline: !todo.duplicate,
+                  classes: { input: classes.TextField__input },
+                }}
+                error={todo.duplicate}
+                rowsMax={1}
+              />
+            </form>
+            <Tooltip
+              title="Delete Todo"
+              onOpen={() => setIsSecondaryTooltipShowing(true)}
+              onClose={() => setIsSecondaryTooltipShowing(false)}
+            >
+              <IconButton
+                color="secondary"
+                aria-label="delete"
+                onClick={(e) => handleDeleteTodo(e, todo)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          </li>
+        </Tooltip>
       ))}
     </ul>
   );

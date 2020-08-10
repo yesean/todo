@@ -1,0 +1,8 @@
+.TodoInputForm {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  margin: 40px 20px;
+  height: 200px;
+}

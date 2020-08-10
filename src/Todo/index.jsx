@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import './styles/index.css'
+import './styles/index.css';
 import TodoList from './components/TodoList';
-import TodoInputForm from './components/TodoInputForm';
+import TodoInputForm from './components/TodoForm';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import blueGrey from '@material-ui/core/colors/blueGrey';
 import red from '@material-ui/core/colors/red';
-import { useEffect } from 'react';
-import { useCallback } from 'react';
+import { format, compareAsc } from 'date-fns';
 
 const theme = createMuiTheme({
   palette: {
@@ -21,108 +20,155 @@ const theme = createMuiTheme({
 
 const initialTodoList = [
   {
-    todo: 'wash feet',
+    content: 'wash feet',
+    dueDate: new Date(),
     finished: false,
     duplicate: false,
-    dateCreated: Date.now(),
+    id: Date.now(),
   },
   {
-    todo: 'drink dew',
+    content: 'drink dew',
+    dueDate: new Date(),
     finished: false,
     duplicate: false,
-    dateCreated: Date.now() + 1,
+    id: Date.now() + 1,
   },
   {
-    todo: 'eat blaze',
+    content: 'eat blaze',
+    dueDate: new Date(),
     finished: false,
     duplicate: false,
-    dateCreated: Date.now() + 2,
+    id: Date.now() + 2,
   },
 ];
 
 const Todo = () => {
   const [todoList, setTodoList] = useState(initialTodoList);
-  const [todoFormInput, setTodoFormInput] = useState({
+  const [todoForm, setTodoForm] = useState({
     input: '',
+    dueDate: new Date(),
     error: false,
   });
 
-  const toggleDuplicateTodos = useCallback(() => {
-    if (todoList.some((todo) => todo.duplicate)) {
-      // unset past duplicate
+  // clear duplicate warnings
+  const unsetDuplicateTodos = () => {
+    setTodoList((oldTodoList) =>
+      oldTodoList.map((todo) => ({ ...todo, duplicate: false }))
+    );
+    setTodoForm((form) => ({
+      ...form,
+      error: false,
+    }));
+  };
 
-      const duplicateTodo = todoList.find((todo) => todo.duplicate);
-      if (duplicateTodo.todo !== todoFormInput.input) {
-        duplicateTodo.duplicate = false;
-        setTodoList([...todoList]);
-        setTodoFormInput((oldTodoFormInput) => ({
-          ...oldTodoFormInput,
-          error: false,
-        }));
-      }
-    } else if (todoList.some((todo) => todo.todo === todoFormInput.input)) {
-      // set curr duplicate
+  // checks for existing duplicate todos
+  const hasDuplicateTodo = (content, id) => {
+    return todoList.some(
+      (possibleDuplicateTodo) =>
+        possibleDuplicateTodo.id !== id &&
+        possibleDuplicateTodo.content === content
+    );
+  };
 
-      const duplicateTodo = todoList.find(
-        (todo) => todo.todo === todoFormInput.input
+  // mark an existing todo as a duplicate
+  const setDuplicateTodo = (content, id) => {
+    setTodoList((oldTodoList) => {
+      const duplicateTodo = oldTodoList.find(
+        (duplicateTodo) =>
+          duplicateTodo.id !== id && duplicateTodo.content === content
       );
       duplicateTodo.duplicate = true;
-      setTodoList([...todoList]);
-      setTodoFormInput((oldTodoFormInput) => ({
-        ...oldTodoFormInput,
-        error: true,
-      }));
-    }
-  }, [todoList, setTodoList, todoFormInput]);
+      return [...oldTodoList];
+    });
+  };
 
-  useEffect(() => {
-    toggleDuplicateTodos();
-  }, [toggleDuplicateTodos, todoFormInput]);
-
-  const addTodo = () => {
-    if (!todoList.some((todo) => todo.todo === todoFormInput.input)) {
+  // add new todo from form input
+  const addTodo = (input, dueDate) => {
+    if (!todoList.some((todo) => todo.content === todoForm.input)) {
       const newTodo = {
-        todo: todoFormInput.input,
+        content: input,
+        dueDate: dueDate,
         finished: false,
-        dateCreated: Date.now(),
+        id: Date.now(),
       };
       setTodoList((oldTodoList) => [...oldTodoList, newTodo]);
-      setTodoFormInput({
+      setTodoForm({
         input: '',
+        dueDate: new Date(),
         error: false,
       });
     }
   };
 
-  const editTodo = (todoToEdit, edit) => {
-    if (todoList.some(todo => todo !== todoToEdit && todo.todo === todoToEdit.todo)) {
-      const duplicateTodo = todoList.find()
+  // edit existing todo
+  const editTodo = (todoToEdit, content) => {
+    unsetDuplicateTodos();
+    setTodoList((oldTodoList) => {
+      oldTodoList.find((todo) => todo.id === todoToEdit.id).content = content;
+      return [...oldTodoList];
+    });
+    if (hasDuplicateTodo(content, todoToEdit.id)) {
+      setDuplicateTodo(content, todoToEdit.id);
+      setTodoList((oldTodoList) => {
+        oldTodoList.find((todo) => todo.id === todoToEdit.id).duplicate = true;
+        return [...oldTodoList];
+      });
     }
-    todoToEdit.todo = edit;
-    setTodoList([...todoList]);
   };
 
+  // toggle todo between finished and unfinished state
   const toggleTodo = (todoToToggle) => {
     todoToToggle.finished = !todoToToggle.finished;
     const finishedTodoList = todoList
       .filter((todo) => todo.finished)
-      .sort((a, b) => a.dateCreated - b.dateCreated);
+      .sort((a, b) => compareAsc(a, b) || a.id - b.id);
     const unfinishedTodoList = todoList
       .filter((todo) => !todo.finished)
-      .sort((a, b) => a.dateCreated - b.dateCreated);
-    console.log(unfinishedTodoList.map((x) => x.dateCreated));
-    console.log(JSON.stringify(unfinishedTodoList));
+      .sort((a, b) => compareAsc(a, b) || a.id - b.id);
     setTodoList([...finishedTodoList, ...unfinishedTodoList]);
   };
 
+  // remove todo from list
   const removeTodo = (todoToDelete) => {
     setTodoList((oldTodoList) =>
       oldTodoList.filter((todo) => todo !== todoToDelete)
     );
   };
 
+  // handle form input
+  const handleTodoFormInputChange = (input) => {
+    unsetDuplicateTodos();
+    setTodoForm((form) => ({ ...form, input: input }));
+    if (hasDuplicateTodo(input, Date.now())) {
+      setDuplicateTodo(input, Date.now());
+      setTodoForm((oldTodoForm) => ({
+        ...oldTodoForm,
+        error: true,
+      }));
+    }
+  };
+
+  // handle form date
+  const handleTodoFormDateChange = (dueDate) => {
+    setTodoForm((oldTodoForm) => ({
+      ...oldTodoForm,
+      dueDate: dueDate,
+    }));
+  };
+
+  const disablePageOnError = (e) => {
+    if (todoList.some((todo) => todo.duplicate)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
-    <div className="Todo">
+    <div
+      className="Todo"
+      onMouseDown={disablePageOnError}
+      onClickCapture={disablePageOnError}
+    >
       <ThemeProvider theme={theme}>
         <TodoList
           todoList={todoList}
@@ -132,8 +178,9 @@ const Todo = () => {
         />
         <TodoInputForm
           addTodo={addTodo}
-          todoFormInput={todoFormInput}
-          setTodoFormInput={setTodoFormInput}
+          todoForm={todoForm}
+          handleTodoFormInputChange={handleTodoFormInputChange}
+          handleTodoFormDateChange={handleTodoFormDateChange}
         />
       </ThemeProvider>
     </div>
