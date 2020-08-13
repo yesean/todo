@@ -8,6 +8,7 @@ import {
   makeStyles,
 } from '@material-ui/core/';
 import DeleteIcon from '@material-ui/icons/Delete';
+import blueGrey from '@material-ui/core/colors/blueGrey';
 import clsx from 'clsx';
 import { format, compareAsc } from 'date-fns';
 
@@ -29,7 +30,6 @@ const useStyles = makeStyles({
   },
   Tooltip: {
     fontSize: 16,
-    opacity: 1,
   },
 });
 
@@ -88,7 +88,8 @@ const TodoList = (props) => {
             onClick={(e) => handleToggleTodo(e, todo)}
           >
             <Tooltip
-              title="Complete Todo"
+              title="Complete"
+              classes={{ tooltip: classes.Tooltip }}
               onOpen={() => setIsSecondaryTooltipShowing(true)}
               onClose={() => setIsSecondaryTooltipShowing(false)}
             >
@@ -122,7 +123,8 @@ const TodoList = (props) => {
               />
             </form>
             <Tooltip
-              title="Delete Todo"
+              title="Delete"
+              classes={{ tooltip: classes.Tooltip }}
               onOpen={() => setIsSecondaryTooltipShowing(true)}
               onClose={() => setIsSecondaryTooltipShowing(false)}
             >

@@ -24,21 +24,21 @@ const initialTodoList = [
     dueDate: new Date(),
     finished: false,
     duplicate: false,
-    id: Date.now(),
+    id: `wash feet ${new Date()}`,
   },
   {
     content: 'drink dew',
     dueDate: new Date(),
     finished: false,
     duplicate: false,
-    id: Date.now() + 1,
+    id: `drink dew ${new Date()}`,
   },
   {
     content: 'eat blaze',
     dueDate: new Date(),
     finished: false,
     duplicate: false,
-    id: Date.now() + 2,
+    id: `eat blaze ${new Date()}`,
   },
 ];
 
@@ -89,7 +89,7 @@ const Todo = () => {
         content: input,
         dueDate: dueDate,
         finished: false,
-        id: Date.now(),
+        id: `${input}${dueDate}`,
       };
       setTodoList((oldTodoList) => [...oldTodoList, newTodo]);
       setTodoForm({
