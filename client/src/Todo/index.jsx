@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import './styles/index.css';
-import TodoList from './components/TodoList';
-import TodoInputForm from './components/TodoForm';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { formatISO, parseISO, compareAsc } from 'date-fns';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import blueGrey from '@material-ui/core/colors/blueGrey';
 import red from '@material-ui/core/colors/red';
-import { format, compareAsc } from 'date-fns';
+
+import TodoList from './components/TodoList';
+import TodoInputForm from './components/TodoForm';
+import './styles/index.css';
 
 const theme = createMuiTheme({
   palette: {
@@ -18,42 +20,26 @@ const theme = createMuiTheme({
   },
 });
 
-const initialTodoList = [
-  {
-    content: 'wash feet',
-    dueDate: new Date(),
-    finished: false,
-    duplicate: false,
-    id: `wash feet ${new Date()}`,
-  },
-  {
-    content: 'drink dew',
-    dueDate: new Date(),
-    finished: false,
-    duplicate: false,
-    id: `drink dew ${new Date()}`,
-  },
-  {
-    content: 'eat blaze',
-    dueDate: new Date(),
-    finished: false,
-    duplicate: false,
-    id: `eat blaze ${new Date()}`,
-  },
-];
+const server = 'http://localhost:3001';
 
 const Todo = () => {
-  const [todoList, setTodoList] = useState(initialTodoList);
+  const [todoList, setTodoList] = useState([]);
   const [todoForm, setTodoForm] = useState({
     input: '',
     dueDate: new Date(),
     error: false,
   });
 
+  useEffect(() => {
+    axios.get(`${server}/api/todos`).then((res) => {
+      setTodoList(sortTodoList(res.data));
+    });
+  }, []);
+
   // clear duplicate warnings
   const unsetDuplicateTodos = () => {
-    setTodoList((oldTodoList) =>
-      oldTodoList.map((todo) => ({ ...todo, duplicate: false }))
+    setTodoList((prevTodoList) =>
+      prevTodoList.map((todo) => ({ ...todo, duplicate: false }))
     );
     setTodoForm((form) => ({
       ...form,
@@ -72,14 +58,33 @@ const Todo = () => {
 
   // mark an existing todo as a duplicate
   const setDuplicateTodo = (content, id) => {
-    setTodoList((oldTodoList) => {
-      const duplicateTodo = oldTodoList.find(
-        (duplicateTodo) =>
-          duplicateTodo.id !== id && duplicateTodo.content === content
+    setTodoList((prevTodoList) => {
+      const nextTodoList = [...prevTodoList];
+      const duplicateTodo = nextTodoList.find(
+        (todo) => todo.id !== id && todo.content === content
       );
       duplicateTodo.duplicate = true;
-      return [...oldTodoList];
+      return [...nextTodoList];
     });
+  };
+
+  // sort todoList by finished and dueDate
+  const sortTodoList = (prevTodoList) => {
+    const finishedTodoList = prevTodoList
+      .filter((todo) => todo.finished)
+      .sort(
+        (a, b) =>
+          compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)) ||
+          a.createdDate - b.createdDate
+      );
+    const unfinishedTodoList = prevTodoList
+      .filter((todo) => !todo.finished)
+      .sort(
+        (a, b) =>
+          compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)) ||
+          a.createdDate - b.createdDate
+      );
+    return [...finishedTodoList, ...unfinishedTodoList];
   };
 
   // add new todo from form input
@@ -87,58 +92,83 @@ const Todo = () => {
     if (!todoList.some((todo) => todo.content === todoForm.input)) {
       const newTodo = {
         content: input,
-        dueDate: dueDate,
+        dueDate: formatISO(dueDate),
         finished: false,
-        id: `${input}${dueDate}`,
       };
-      setTodoList((oldTodoList) => [...oldTodoList, newTodo]);
-      setTodoForm({
-        input: '',
-        dueDate: new Date(),
-        error: false,
+      console.log(input, dueDate);
+      axios.post(`${server}/api/todos/`, newTodo).then((res) => {
+        setTodoList((prevTodoList) =>
+          sortTodoList([...prevTodoList, res.data])
+        );
+        setTodoForm({
+          input: '',
+          dueDate: new Date(),
+          error: false,
+        });
       });
     }
   };
 
   // edit existing todo
-  const editTodo = (todoToEdit, content) => {
+  const editTodoContent = (todoToEdit, content) => {
     unsetDuplicateTodos();
-    setTodoList((oldTodoList) => {
-      oldTodoList.find((todo) => todo.id === todoToEdit.id).content = content;
-      return [...oldTodoList];
+    setTodoList((prevTodoList) => {
+      const nextTodoList = [...prevTodoList];
+      nextTodoList.find((todo) => todo.id === todoToEdit.id).content = content;
+      return [...prevTodoList];
     });
     if (hasDuplicateTodo(content, todoToEdit.id)) {
       setDuplicateTodo(content, todoToEdit.id);
-      setTodoList((oldTodoList) => {
-        oldTodoList.find((todo) => todo.id === todoToEdit.id).duplicate = true;
-        return [...oldTodoList];
+      setTodoList((prevTodoList) => {
+        const nextTodoList = [...prevTodoList];
+        nextTodoList.find((todo) => todo.id === todoToEdit.id).duplicate = true;
+        return [...prevTodoList];
       });
     }
   };
 
+  // update existing todo
+  const updateTodo = (id) => {
+    return axios
+      .put(
+        `${server}/api/todos/${id}`,
+        todoList.find((todo) => todo.id === id)
+      )
+      .then((res) => Promise.resolve('Success'))
+      .catch(() => Promise.resolve('Failure'));
+  };
+
   // toggle todo between finished and unfinished state
-  const toggleTodo = (todoToToggle) => {
-    todoToToggle.finished = !todoToToggle.finished;
-    const finishedTodoList = todoList
-      .filter((todo) => todo.finished)
-      .sort((a, b) => compareAsc(a, b) || a.id - b.id);
-    const unfinishedTodoList = todoList
-      .filter((todo) => !todo.finished)
-      .sort((a, b) => compareAsc(a, b) || a.id - b.id);
-    setTodoList([...finishedTodoList, ...unfinishedTodoList]);
+  const toggleTodo = (id, finished) => {
+    const todoToToggle = {
+      ...todoList.find((todo) => todo.id === id),
+      finished: !finished,
+    };
+    axios
+      .put(`${server}/api/todos/${id}`, todoToToggle)
+      .then((res) => {
+        const nextTodoList = [...todoList];
+        nextTodoList[nextTodoList.findIndex((todo) => todo.id === id)] =
+          res.data;
+        setTodoList(sortTodoList(nextTodoList));
+      })
+      .catch((res) => console.log(res));
   };
 
   // remove todo from list
-  const removeTodo = (todoToDelete) => {
-    setTodoList((oldTodoList) =>
-      oldTodoList.filter((todo) => todo !== todoToDelete)
-    );
+  const deleteTodo = (todoToDelete) => {
+    console.log(todoToDelete);
+    axios.delete(`${server}/api/todos/${todoToDelete.id}`).then((res) => {
+      setTodoList((prevTodoList) =>
+        prevTodoList.filter((todo) => todo.id !== todoToDelete.id)
+      );
+    });
   };
 
   // handle form input
   const handleTodoFormInputChange = (input) => {
     unsetDuplicateTodos();
-    setTodoForm((form) => ({ ...form, input: input }));
+    setTodoForm((form) => ({ ...form, input }));
     if (hasDuplicateTodo(input, Date.now())) {
       setDuplicateTodo(input, Date.now());
       setTodoForm((oldTodoForm) => ({
@@ -152,7 +182,7 @@ const Todo = () => {
   const handleTodoFormDateChange = (dueDate) => {
     setTodoForm((oldTodoForm) => ({
       ...oldTodoForm,
-      dueDate: dueDate,
+      dueDate,
     }));
   };
 
@@ -172,9 +202,10 @@ const Todo = () => {
       <ThemeProvider theme={theme}>
         <TodoList
           todoList={todoList}
-          editTodo={editTodo}
+          editTodoContent={editTodoContent}
+          updateTodo={updateTodo}
           toggleTodo={toggleTodo}
-          removeTodo={removeTodo}
+          deleteTodo={deleteTodo}
         />
         <TodoInputForm
           addTodo={addTodo}

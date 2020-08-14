@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './../styles/TodoForm.css';
 
 import { TextField } from '@material-ui/core';
@@ -16,13 +16,14 @@ const useStyles = makeStyles({
   },
   TextField__input: {
     textAlign: 'center',
+    fullWidth: true,
   },
   KeyboardDatePicker: {
-    width: 'calc(100vw - 136px)',
-    maxWidth: '300px',
+    width: 'calc((100vw - 136px) / 4)',
+    maxWidth: '250px',
   },
-  KeyboardDatePicker__input: {
-    textAlign: 'center',
+  KeyboardDatePicker__inputAdornment: {
+    display: 'none',
   },
 });
 
@@ -31,7 +32,6 @@ const TodoTextFieldForm = (props) => {
 
   const handleSubmit = (input, dueDate) => {
     if (input.length > 0) {
-      console.log(input, dueDate);
       props.addTodo(input, dueDate);
     }
   };
@@ -48,13 +48,13 @@ const TodoTextFieldForm = (props) => {
   };
 
   return (
-    <form className="TodoInputForm" onSubmit={handleSubmit}>
+    <form className='TodoInputForm' onSubmit={handleSubmit}>
       <TextField
         classes={{ root: classes.TextField }}
-        margin="normal"
-        type="text"
-        name="todoTextField"
-        placeholder="Enter Todo..."
+        margin='normal'
+        type='text'
+        name='todoTextField'
+        placeholder='Enter Todo...'
         value={props.todoForm.input}
         onChange={handleInputChange}
         onKeyDown={handleEnterPressed}
@@ -63,16 +63,15 @@ const TodoTextFieldForm = (props) => {
       />
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <KeyboardDatePicker
-          margin="normal"
-          // label="Due Date"
-          format="M/dd"
+          margin='normal'
+          label='Due Date'
+          format='MM/dd/yy'
           value={props.todoForm.dueDate}
           onChange={props.handleTodoFormDateChange}
           onKeyDown={handleEnterPressed}
-          InputProps={{ classes: { input: classes.KeyboardDatePicker__input } }}
+          classes={{ root: classes.KeyboardDatePicker }}
           KeyboardButtonProps={{
             'aria-label': 'change date',
-            'style': { display: 'none' },
           }}
         />
       </MuiPickersUtilsProvider>

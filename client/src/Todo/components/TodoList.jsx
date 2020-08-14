@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import './../styles/TodoList.css';
+import React from 'react';
+import '../styles/TodoList.css';
 import {
   TextField,
   IconButton,
@@ -7,10 +7,9 @@ import {
   Tooltip,
   makeStyles,
 } from '@material-ui/core/';
-import DeleteIcon from '@material-ui/icons/Delete';
-import blueGrey from '@material-ui/core/colors/blueGrey';
+import { Delete as DeleteIcon } from '@material-ui/icons/';
 import clsx from 'clsx';
-import { format, compareAsc } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 const useStyles = makeStyles({
   Checkbox: {
@@ -34,30 +33,32 @@ const useStyles = makeStyles({
 });
 
 const TodoList = (props) => {
-  const [isSecondaryTooltipShowing, setIsSecondaryTooltipShowing] = useState(
-    false
-  );
   const classes = useStyles();
 
   const handleEditTodo = (e, todo) => {
     e.stopPropagation();
-    props.editTodo(todo, e.target.value);
+    props.editTodoContent(todo, e.target.value);
   };
 
   const handleToggleTodo = (e, todo) => {
-    props.toggleTodo(todo);
+    e.stopPropagation();
+    props.toggleTodo(todo.id, todo.finished);
   };
 
   const handleSubmitTodo = (e, todo) => {
     e.preventDefault();
     if (!todo.duplicate) {
-      document.activeElement.blur();
+      props.updateTodo(todo.id).then((status) => {
+        if (status === 'Success') {
+          document.activeElement.blur();
+        }
+      });
     }
   };
 
   const handleDeleteTodo = (e, todo) => {
     e.stopPropagation();
-    props.removeTodo(todo);
+    props.deleteTodo(todo);
   };
 
   const TodoListStyle = {
@@ -68,40 +69,49 @@ const TodoList = (props) => {
   };
 
   const generateTodoTooltip = (todo) => {
-    return <p>Due: {format(todo.dueDate, 'MM/dd/yyyy')}</p>;
+    console.log(todo.createdDate, todo.dueDate);
+    return (
+      <>
+        <p>
+          Created:
+          {format(parseISO(todo.createdDate), 'MM/dd/yyyy')}
+        </p>
+        <p>
+          Due:
+          {format(parseISO(todo.dueDate), 'MM/dd/yyyy')}
+        </p>
+      </>
+    );
   };
 
   return (
     <ul className="TodoList" style={TodoListStyle}>
       {props.todoList.map((todo) => (
-        <Tooltip
+        <li
           key={todo.id}
-          title={isSecondaryTooltipShowing ? '' : generateTodoTooltip(todo)}
-          classes={{ tooltip: classes.Tooltip }}
+          className={clsx(
+            'TodoList__li',
+            todo.finished && 'TodoList__li--finished'
+          )}
+          onClick={(e) => handleToggleTodo(e, todo)}
         >
-          <li
-            key={todo.id}
-            className={clsx(
-              'TodoList__li',
-              todo.finished && 'TodoList__li--finished'
-            )}
-            onClick={(e) => handleToggleTodo(e, todo)}
-          >
-            <Tooltip
-              title="Complete"
-              classes={{ tooltip: classes.Tooltip }}
-              onOpen={() => setIsSecondaryTooltipShowing(true)}
-              onClose={() => setIsSecondaryTooltipShowing(false)}
-            >
-              <Checkbox
-                id={todo.content}
-                classes={{ root: classes.Checkbox }}
-                name="todo"
-                color="primary"
-                checked={todo.finished}
-              />
-            </Tooltip>
+          <Tooltip title="Complete" classes={{ tooltip: classes.Tooltip }}>
+            <Checkbox
+              id={todo.content}
+              classes={{ root: classes.Checkbox }}
+              name="todo"
+              color="primary"
+              checked={todo.finished}
+            />
+          </Tooltip>
 
+          <Tooltip
+            key={todo.id}
+            title={generateTodoTooltip(todo)}
+            placement="right"
+            classes={{ tooltip: classes.Tooltip }}
+            arrow
+          >
             <form
               className="TodoList__li__form"
               onSubmit={(e) => handleSubmitTodo(e, todo)}
@@ -122,22 +132,17 @@ const TodoList = (props) => {
                 rowsMax={1}
               />
             </form>
-            <Tooltip
-              title="Delete"
-              classes={{ tooltip: classes.Tooltip }}
-              onOpen={() => setIsSecondaryTooltipShowing(true)}
-              onClose={() => setIsSecondaryTooltipShowing(false)}
+          </Tooltip>
+          <Tooltip title="Delete" classes={{ tooltip: classes.Tooltip }}>
+            <IconButton
+              color="secondary"
+              aria-label="delete"
+              onClick={(e) => handleDeleteTodo(e, todo)}
             >
-              <IconButton
-                color="secondary"
-                aria-label="delete"
-                onClick={(e) => handleDeleteTodo(e, todo)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          </li>
-        </Tooltip>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </li>
       ))}
     </ul>
   );
