@@ -32,23 +32,29 @@ const useStyles = makeStyles({
   },
 });
 
-const TodoList = (props) => {
+const TodoList = ({
+  todoList,
+  editTodoContent,
+  toggleTodo,
+  updateTodo,
+  deleteTodo,
+}) => {
   const classes = useStyles();
 
   const handleEditTodo = (e, todo) => {
     e.stopPropagation();
-    props.editTodoContent(todo, e.target.value);
+    editTodoContent(todo, e.target.value);
   };
 
   const handleToggleTodo = (e, todo) => {
     e.stopPropagation();
-    props.toggleTodo(todo.id, todo.finished);
+    toggleTodo(todo.id, todo.finished);
   };
 
   const handleSubmitTodo = (e, todo) => {
     e.preventDefault();
     if (!todo.duplicate) {
-      props.updateTodo(todo.id).then((status) => {
+      updateTodo(todo.id).then((status) => {
         if (status === 'Success') {
           document.activeElement.blur();
         }
@@ -58,7 +64,7 @@ const TodoList = (props) => {
 
   const handleDeleteTodo = (e, todo) => {
     e.stopPropagation();
-    props.deleteTodo(todo);
+    deleteTodo(todo);
   };
 
   const TodoListStyle = {
@@ -69,24 +75,17 @@ const TodoList = (props) => {
   };
 
   const generateTodoTooltip = (todo) => {
-    console.log(todo.createdDate, todo.dueDate);
     return (
       <>
-        <p>
-          Created:
-          {format(parseISO(todo.createdDate), 'MM/dd/yyyy')}
-        </p>
-        <p>
-          Due:
-          {format(parseISO(todo.dueDate), 'MM/dd/yyyy')}
-        </p>
+        <p>{`Created: ${format(parseISO(todo.createdDate), 'MM/dd/yyyy')}`}</p>
+        <p>{`Due: ${format(parseISO(todo.dueDate), 'MM/dd/yyyy')}`}</p>
       </>
     );
   };
 
   return (
     <ul className="TodoList" style={TodoListStyle}>
-      {props.todoList.map((todo) => (
+      {todoList.map((todo) => (
         <li
           key={todo.id}
           className={clsx(

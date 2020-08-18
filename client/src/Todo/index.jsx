@@ -75,38 +75,33 @@ const Todo = () => {
       .sort(
         (a, b) =>
           compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)) ||
-          a.createdDate - b.createdDate
+          compareAsc(parseISO(a.createdDate), parseISO(b.createdDate))
       );
     const unfinishedTodoList = prevTodoList
       .filter((todo) => !todo.finished)
       .sort(
         (a, b) =>
           compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)) ||
-          a.createdDate - b.createdDate
+          compareAsc(parseISO(a.createdDate), parseISO(b.createdDate))
       );
     return [...finishedTodoList, ...unfinishedTodoList];
   };
 
   // add new todo from form input
   const addTodo = (input, dueDate) => {
-    if (!todoList.some((todo) => todo.content === todoForm.input)) {
-      const newTodo = {
-        content: input,
-        dueDate: formatISO(dueDate),
-        finished: false,
-      };
-      console.log(input, dueDate);
-      axios.post(`${server}/api/todos/`, newTodo).then((res) => {
-        setTodoList((prevTodoList) =>
-          sortTodoList([...prevTodoList, res.data])
-        );
-        setTodoForm({
-          input: '',
-          dueDate: new Date(),
-          error: false,
-        });
+    const newTodo = {
+      content: input,
+      dueDate: formatISO(dueDate),
+      finished: false,
+    };
+    axios.post(`${server}/api/todos/`, newTodo).then((res) => {
+      setTodoList((prevTodoList) => sortTodoList([...prevTodoList, res.data]));
+      setTodoForm({
+        input: '',
+        dueDate: new Date(),
+        error: false,
       });
-    }
+    });
   };
 
   // edit existing todo
@@ -152,12 +147,11 @@ const Todo = () => {
           res.data;
         setTodoList(sortTodoList(nextTodoList));
       })
-      .catch((res) => console.log(res));
+      .catch(console.log);
   };
 
   // remove todo from list
   const deleteTodo = (todoToDelete) => {
-    console.log(todoToDelete);
     axios.delete(`${server}/api/todos/${todoToDelete.id}`).then((res) => {
       setTodoList((prevTodoList) =>
         prevTodoList.filter((todo) => todo.id !== todoToDelete.id)

@@ -1,39 +1,14 @@
 /* eslint-disable no-prototype-builtins */
-const { formatISO, isValid, parseISO, toDate } = require('date-fns');
+require('dotenv').config();
+const { formatISO, isValid, parseISO } = require('date-fns');
 const express = require('express');
 const cors = require('cors');
+const Todo = require('./models/todo');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
-
-let todos = [
-  {
-    content: 'brush teeth',
-    dueDate: formatISO(new Date(2020, 7, 1)),
-    createdDate: formatISO(new Date(2020, 7, 1)),
-    finished: false,
-    duplicate: false,
-    id: `brush teeth${formatISO(new Date(2020, 7, 1))}`,
-  },
-  {
-    content: 'grind code',
-    dueDate: formatISO(new Date(2020, 7, 2)),
-    createdDate: formatISO(new Date(2020, 7, 2)),
-    finished: false,
-    duplicate: false,
-    id: `grind code${formatISO(new Date(2020, 7, 2))}`,
-  },
-  {
-    content: 'sleep',
-    dueDate: formatISO(new Date(2020, 7, 3)),
-    createdDate: formatISO(new Date(2020, 7, 3)),
-    finished: false,
-    duplicate: false,
-    id: `sleep${formatISO(new Date(2020, 7, 3))}`,
-  },
-];
 
 // home page
 app.get('/', (req, res) => {
@@ -42,139 +17,107 @@ app.get('/', (req, res) => {
 
 // get all todos
 app.get('/api/todos', (req, res) => {
-  res.json(todos);
+  Todo.find({}).then((todos) => res.json(todos));
 });
 
 // get specific todo based on id
-app.get('/api/todos/:id', (req, res) => {
+app.get('/api/todos/:id', (req, res, next) => {
   const { id } = req.params;
-  const todoToGet = todos.find((todo) => todo.id === id);
-
-  if (todoToGet) {
-    res.json(todoToGet);
-  } else {
-    res.sendStatus(404);
-  }
+  Todo.findById(id)
+    .then((todo) => res.json(todo))
+    .catch((error) => next(error));
 });
 
-// insert new todo
-app.post('/api/todos/', (req, res) => {
-  const { body } = req;
-
+const isValidTodo = async (todo) => {
   // missing content
-  if (!body.content) {
-    return res.status(400).json({ error: 'content missing' });
-  }
-
-  // missing dueDate
-  if (!body.dueDate) {
-    return res.status(400).json({ error: 'dueDate missing' });
+  if (!todo.content) {
+    return { error: 'content missing' };
   }
 
   // incorrectly formatted dueDate
-  if (!isValid(parseISO(body.dueDate))) {
-    return res
-      .status(400)
-      .json({ error: 'invalid dueDate format, dueDate must be in ISO format' });
+  if (!todo.dueDate || !isValid(parseISO(todo.dueDate))) {
+    return { error: 'dueDate must be in ISO format' };
   }
 
   // incorrectly formatted finished
-  if (body.finished && typeof body.finished !== 'boolean') {
-    return res
-      .status(400)
-      .json({ error: 'invalid finished format, finished must be a boolean' });
+  if (todo.finished && typeof todo.finished !== 'boolean') {
+    return { error: 'finished must be a boolean' };
+  }
+
+  return {};
+};
+
+// insert new todo
+app.post('/api/todos/', async (req, res) => {
+  const { body } = req;
+
+  // check todo format
+  const result = await isValidTodo(body);
+  if (result.error) {
+    return res.status(400).json(result.error);
   }
 
   // duplicate todo
-  if (
-    todos.some(
-      (todo) => todo.id === `${body.content}${toDate(parseISO(body.dueDate))}`
-    )
-  ) {
-    return res.status(400).json({ error: 'invalid todo, todo already exists' });
+  const isDuplicate = await Todo.exists({
+    content: body.content,
+    dueDate: body.dueDate,
+  });
+  if (isDuplicate) {
+    return { error: 'todo already exists' };
   }
 
   const createdDate = formatISO(new Date());
-  const todoToAdd = {
+  const todoToAdd = new Todo({
     content: body.content,
     dueDate: body.dueDate,
     createdDate,
     finished: body.finished || false,
-    duplicate: false,
-    id: `${body.content}${createdDate}`,
-  };
+  });
 
-  todos = [...todos, todoToAdd];
-  return res.json(todoToAdd);
+  return todoToAdd.save().then((savedTodo) => {
+    return res.json(savedTodo);
+  });
 });
 
 // update existing todo
-app.put('/api/todos/:id', (req, res) => {
+app.put('/api/todos/:id', async (req, res, next) => {
   const { body } = req;
   const { id } = req.params;
-  const allowedKeys = new Set([
-    'content',
-    'dueDate',
-    'createdDate',
-    'finished',
-    'duplicate',
-    'id',
-  ]);
 
-  // keys don't exist
-  if (Object.keys(body).some((key) => !allowedKeys.has(key))) {
-    return res.status(400).json({
-      error: 'only content, dueDate, or finished can be modified',
-    });
-  }
-
-  // id doesn't exist
-  if (!todos.some((todo) => todo.id === id)) {
-    return res.status(400).json({
-      error: 'no todo with specified id found',
-    });
-  }
-
-  // invalid date format
-  if (body.date && isValid(parseISO(body.dueDate))) {
-    return res.status(400).json({
-      error: 'dueDate must be in ISO format',
-    });
-  }
-
-  // invalid finished format
-  if (body.hasOwnProperty('finished') && typeof body.finished !== 'boolean') {
-    return res.status(400).json({
-      error: 'finished must be a boolean',
-    });
+  // check todo format
+  const result = await isValidTodo(body);
+  if (result.error) {
+    return res.status(400).json(result.error);
   }
 
   const updatedTodo = {
     content: body.content,
     dueDate: body.dueDate,
-    createdDate: body.createdDate,
     finished: body.finished,
-    duplicate: body.duplicate,
-    id: `${body.content}${body.createdDate}`,
   };
 
-  const index = todos.findIndex((todo) => todo.id === id);
-  todos[index] = updatedTodo;
-  return res.json(todos[index]);
+  return Todo.findByIdAndUpdate(id, updatedTodo, { new: true })
+    .then((todo) => res.json(todo))
+    .catch((error) => next(error));
 });
 
 // delete todo based on id
-app.delete('/api/todos/:id', (req, res) => {
+app.delete('/api/todos/:id', (req, res, next) => {
   const { id } = req.params;
-  const todoToDelete = todos.find((todo) => todo.id === id);
 
-  if (todoToDelete) {
-    todos = todos.filter((todo) => todo !== todoToDelete);
-    res.sendStatus(204);
-  } else {
-    res.sendStatus(404);
-  }
+  return Todo.findByIdAndDelete(id)
+    .then((result) => res.status(204).end())
+    .catch((error) => next(error));
 });
+
+const errorHandler = (error, req, res, next) => {
+  if (error.name === 'CastError') {
+    return res.status(400).json({ error: 'malformatted id' });
+  }
+  return next(error);
+};
+
+app.use(errorHandler);
 
 // listen on port
 app.listen(PORT, () => {
