@@ -21,6 +21,10 @@ const todoSchema = new mongoose.Schema({
   dueDate: Date,
   createdDate: Date,
   finished: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
 });
 
 todoSchema.set('toJSON', {

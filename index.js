@@ -4,6 +4,7 @@ const { isValid, parseJSON } = require('date-fns');
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const Todo = require('./models/todo');
 
 const app = express();
@@ -11,18 +12,22 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
 
+const privateKey = 'privateKey';
+
 // home page
 app.get('/', (req, res) => {
   res.send('<p>this is the server for todo!</p>');
 });
 
-app.post('/api/login', (req, res) => {
+app.post('api/accout/create', async (req, res) => {
+  const { username, password } = req.body;
+  const saltRounds = 10;
+  const hash = await bcrypt.hash(password, saltRounds);
   const user = {
-    id: 1,
-    name: 'benis',
-    email: 'benis@gmail.com',
+    username,
+    hash,
   };
-  jwt.sign({ user }, 'secretkey', (error, token) => {
+  jwt.sign({ user }, privateKey, (err, token) => {
     return res.json(token);
   });
 });
@@ -44,9 +49,18 @@ const verifyToken = (req, res, next) => {
 
 app.use(verifyToken);
 
+app.post('/api/account/login', (req, res) => {
+  jwt.verify(req.token, privateKey, (error, decoded) => {
+    if (error) {
+      return res.status(403).json({ error: 'invalid login' });
+    }
+    return res.sendStatus(200);
+  });
+});
+
 // get all todos
 app.get('/api/todos', (req, res) => {
-  jwt.verify(req.token, 'secretkey', (error, authData) => {
+  jwt.verify(req.token, privateKey, (error, decoded) => {
     if (error) {
       return res.sendStatus(403);
     }
