@@ -1,9 +1,10 @@
 import React from 'react';
 import '../styles/TodoForm.css';
 
-import { TextField } from '@material-ui/core';
+import { TextField, FormControl } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import DateFnsUtils from '@date-io/date-fns';
+import { endOfDay } from 'date-fns';
 import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker,
@@ -19,67 +20,74 @@ const useStyles = makeStyles({
     fullWidth: true,
   },
   KeyboardDatePicker: {
-    width: 'calc((100vw - 136px) / 4)',
+    width: 'calc((100vw - 136px) / 2)',
     maxWidth: '250px',
+    minWidth: 150,
   },
   KeyboardDatePicker__inputAdornment: {
     display: 'none',
   },
 });
 
-const TodoTextFieldForm = ({
-  todoForm,
-  addTodo,
-  handleTodoFormInputChange,
-  handleTodoFormDateChange,
-}) => {
+const TodoTextFieldForm = ({ todoForm, addTodo, handleTodoFormChange }) => {
   const classes = useStyles();
 
-  const handleSubmit = (input, dueDate, error) => {
-    if (input.length > 0 && !error) {
-      addTodo(input, dueDate);
+  const handleSubmit = (content, dueDate, error) => {
+    if (content.length > 0 && !error) {
+      addTodo({ content, dueDate });
     }
   };
 
   const handleInputChange = (e) => {
-    e.preventDefault();
-    handleTodoFormInputChange(e.target.value);
+    handleTodoFormChange({ content: e.target.value });
+  };
+
+  const handleDueDateChange = (e) => {
+    handleTodoFormChange({ dueDate: endOfDay(e) });
   };
 
   const handleEnterPressed = (e) => {
     if (e.key === 'Enter') {
-      handleSubmit(todoForm.input, todoForm.dueDate, todoForm.error);
+      handleSubmit(todoForm.content, todoForm.dueDate, todoForm.error);
     }
   };
 
   return (
     <form className="TodoInputForm" onSubmit={handleSubmit}>
-      <TextField
-        classes={{ root: classes.TextField }}
-        margin="normal"
-        type="text"
-        name="todoTextField"
-        placeholder="Enter Todo..."
-        value={todoForm.input}
-        onChange={handleInputChange}
-        onKeyDown={handleEnterPressed}
-        InputProps={{ classes: { input: classes.TextField__input } }}
-        error={todoForm.error}
-      />
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <KeyboardDatePicker
+      <FormControl error={todoForm.error}>
+        <TextField
+          classes={{ root: classes.TextField }}
           margin="normal"
-          label="Due Date"
-          format="MM/dd/yy"
-          value={todoForm.dueDate}
-          onChange={handleTodoFormDateChange}
+          type="text"
+          name="todoTextField"
+          placeholder="Enter Todo..."
+          value={todoForm.content}
+          onChange={handleInputChange}
           onKeyDown={handleEnterPressed}
-          classes={{ root: classes.KeyboardDatePicker }}
-          KeyboardButtonProps={{
-            'aria-label': 'change date',
-          }}
+          InputProps={{ classes: { input: classes.TextField__input } }}
+          inputProps={{ className: 'TodoForm__input' }}
+          error={todoForm.error}
+          helperText={todoForm.error && 'Duplicate todo'}
         />
-      </MuiPickersUtilsProvider>
+      </FormControl>
+      <FormControl error={todoForm.error}>
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+          <KeyboardDatePicker
+            margin="normal"
+            label="Due Date"
+            format="MM/dd/yy"
+            value={todoForm.dueDate}
+            error={todoForm.error}
+            onChange={handleDueDateChange}
+            onKeyDown={handleEnterPressed}
+            classes={{ root: classes.KeyboardDatePicker }}
+            KeyboardButtonProps={{
+              'aria-label': 'change date',
+            }}
+            inputProps={{ className: 'TodoForm__input' }}
+          />
+        </MuiPickersUtilsProvider>
+      </FormControl>
     </form>
   );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import '../styles/TodoList.css';
 import {
   TextField,
@@ -9,7 +9,7 @@ import {
 } from '@material-ui/core/';
 import { Delete as DeleteIcon } from '@material-ui/icons/';
 import clsx from 'clsx';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 const useStyles = makeStyles({
   Checkbox: {
@@ -32,33 +32,48 @@ const useStyles = makeStyles({
   },
 });
 
-const TodoList = ({
-  todoList,
-  editTodoContent,
-  toggleTodo,
-  updateTodo,
-  deleteTodo,
-}) => {
+const TodoList = ({ todoList, handleTodoChange, updateTodo, deleteTodo }) => {
   const classes = useStyles();
 
+  useEffect(() => {
+    const preventBlur = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const preventTabbing = (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    if (todoList.some((todo) => todo.duplicate)) {
+      document.addEventListener('mousedown', preventBlur);
+      document.addEventListener('keydown', preventTabbing);
+      return () => {
+        document.removeEventListener('mousedown', preventBlur);
+        document.removeEventListener('keydown', preventTabbing);
+      };
+    }
+  }, [todoList]);
+
   const handleEditTodo = (e, todo) => {
-    e.stopPropagation();
-    editTodoContent(todo, e.target.value);
+    handleTodoChange(todo.id, { content: e.target.value });
   };
 
   const handleToggleTodo = (e, todo) => {
-    e.stopPropagation();
-    toggleTodo(todo.id, todo.finished);
+    if (!todoList.some((todo) => todo.duplicate)) {
+      updateTodo(todo.id, { finished: !todo.finished });
+    }
   };
 
   const handleSubmitTodo = (e, todo) => {
     e.preventDefault();
     if (!todo.duplicate) {
-      updateTodo(todo.id).then((status) => {
-        if (status === 'Success') {
+      updateTodo(todo.id)
+        .then((res) => {
           document.activeElement.blur();
-        }
-      });
+        })
+        .catch(console.log);
     }
   };
 
@@ -67,24 +82,17 @@ const TodoList = ({
     deleteTodo(todo);
   };
 
-  const TodoListStyle = {
-    height:
-      0.75 * window.innerHeight -
-      140 -
-      ((0.75 * window.innerHeight - 140) % 50),
-  };
-
   const generateTodoTooltip = (todo) => {
     return (
       <>
-        <p>{`Created: ${format(parseISO(todo.createdDate), 'MM/dd/yyyy')}`}</p>
-        <p>{`Due: ${format(parseISO(todo.dueDate), 'MM/dd/yyyy')}`}</p>
+        <p>{`Created: ${format(todo.createdDate, 'MM/dd/yyyy')}`}</p>
+        <p>{`Due: ${format(todo.dueDate, 'MM/dd/yyyy')}`}</p>
       </>
     );
   };
 
   return (
-    <ul className="TodoList" style={TodoListStyle}>
+    <ul className="TodoList">
       {todoList.map((todo) => (
         <li
           key={todo.id}
@@ -118,6 +126,7 @@ const TodoList = ({
               <TextField
                 classes={{ root: classes.TextField }}
                 value={todo.content}
+                error={todo.duplicate}
                 onChange={(e) => handleEditTodo(e, todo)}
                 onClick={(e) => e.stopPropagation()}
                 style={{
@@ -125,10 +134,10 @@ const TodoList = ({
                 }}
                 InputProps={{
                   disableUnderline: !todo.duplicate,
-                  classes: { input: classes.TextField__input },
+                  classes: {
+                    input: classes.TextField__input,
+                  },
                 }}
-                error={todo.duplicate}
-                rowsMax={1}
               />
             </form>
           </Tooltip>
