@@ -12,5 +12,6 @@
   "plugins": ["import", "prettier"],
   "rules": {
     "prettier/prettier": "error",
+    "no-underscore-dangle": "off"
   },
 }
