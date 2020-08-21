@@ -30,7 +30,6 @@ mongoose
 app.use(express.json());
 app.use(cors());
 
-// app.use(middleware.verifyToken);
 app.use('/api/users', usersRouter);
 app.use('/api/todos', todosRouter);
 app.use('/api/login', loginRouter);
