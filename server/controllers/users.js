@@ -1,7 +1,5 @@
 const bcrypt = require('bcrypt');
 const usersRouter = require('express').Router();
-const jwt = require('jsonwebtoken');
-const config = require('../utils/config');
 const User = require('../models/user');
 
 usersRouter.get('/', async (req, res) => {
@@ -21,15 +19,6 @@ usersRouter.post('/', async (req, res) => {
 
   const savedUser = await user.save();
   res.json(savedUser);
-});
-
-usersRouter.post('/login', (req, res) => {
-  jwt.verify(req.token, config.SECRET_KEY, (error, decoded) => {
-    if (error) {
-      return res.status(403).json({ error: 'invalid login' });
-    }
-    return res.sendStatus(200);
-  });
 });
 
 module.exports = usersRouter;
