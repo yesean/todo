@@ -14,7 +14,11 @@ todosRouter.get('/:id', async (req, res, next) => {
 
   try {
     const todo = await Todo.findById(id);
-    res.json(todo);
+    if (todo) {
+      res.json(todo);
+    } else {
+      res.status(404).end();
+    }
   } catch (error) {
     return next(error);
   }
