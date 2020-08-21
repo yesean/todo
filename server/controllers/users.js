@@ -4,17 +4,23 @@ const jwt = require('jsonwebtoken');
 const config = require('../utils/config');
 const User = require('../models/user');
 
-usersRouter.post('/create', async (req, res) => {
+usersRouter.get('/', async (req, res) => {
+  const users = await User.find({}).populate('todos');
+  res.json(users);
+});
+
+usersRouter.post('/', async (req, res) => {
   const { username, password } = req.body;
   const saltRounds = 10;
-  const hash = await bcrypt.hash(password, saltRounds);
-  const user = {
+  const passwordHash = await bcrypt.hash(password, saltRounds);
+
+  const user = new User({
     username,
-    hash,
-  };
-  jwt.sign({ user }, config.SECRET_KEY, (err, token) => {
-    return res.json(token);
+    passwordHash,
   });
+
+  const savedUser = await user.save();
+  res.json(savedUser);
 });
 
 usersRouter.post('/login', (req, res) => {
@@ -25,3 +31,5 @@ usersRouter.post('/login', (req, res) => {
     return res.sendStatus(200);
   });
 });
+
+module.exports = usersRouter;
