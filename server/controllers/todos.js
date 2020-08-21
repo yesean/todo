@@ -1,33 +1,38 @@
 const todosRouter = require('express').Router();
 const Todo = require('../models/todo');
+const middleware = require('../utils/middleware');
 
 // get all todos
-todosRouter.get('/', (req, res) => {
-  // jwt.verify(req.token, privateKey, (error, decoded) => {
-  //   if (error) {
-  //     return res.sendStatus(403);
-  //   }
-  //   return Todo.find({}).then((todos) => res.json(todos));
-  // });
-  return Todo.find({}).then((todos) => res.json(todos));
+todosRouter.get('/', async (req, res) => {
+  const todos = await Todo.find({});
+  return res.json(todos);
 });
 
 // get specific todo based on id
-todosRouter.get('/:id', (req, res, next) => {
+todosRouter.get('/:id', async (req, res, next) => {
   const { id } = req.params;
-  Todo.findById(id)
-    .then((todo) => res.json(todo))
-    .catch((error) => next(error));
+
+  try {
+    const todo = await Todo.findById(id);
+    res.json(todo);
+  } catch (error) {
+    return next(error);
+  }
 });
 
 // delete todo based on id
-todosRouter.delete('/:id', (req, res, next) => {
+todosRouter.delete('/:id', async (req, res, next) => {
   const { id } = req.params;
 
-  return Todo.findByIdAndDelete(id)
-    .then((result) => res.status(204).end())
-    .catch((error) => next(error));
+  try {
+    await Todo.findByIdAndDelete(id);
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
 });
+
+todosRouter.use(middleware.verifyTodo);
 
 // insert new todo
 todosRouter.post('/', async (req, res) => {
@@ -50,9 +55,8 @@ todosRouter.post('/', async (req, res) => {
     createdDate,
   });
 
-  return todoToAdd.save().then((savedTodo) => {
-    return res.json(savedTodo);
-  });
+  const todo = await todoToAdd.save();
+  return res.json(todo);
 });
 
 // update existing todo
@@ -66,9 +70,12 @@ todosRouter.put('/:id', async (req, res, next) => {
     finished: body.finished,
   };
 
-  return Todo.findByIdAndUpdate(id, updatedTodo, { new: true })
-    .then((todo) => res.json(todo))
-    .catch((error) => next(error));
+  try {
+    const todo = await Todo.findByIdAndUpdate(id, updatedTodo, { new: true });
+    return todo;
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = todosRouter;
