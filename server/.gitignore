@@ -1,5 +1,4 @@
 node_modules
-.prettierrc.json
 .env
 tests
 utils/for_testing.js
