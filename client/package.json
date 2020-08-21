@@ -17,7 +17,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.3"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -27,8 +27,13 @@
   },
   "eslintConfig": {
     "extends": [
+      "eslint:recommended",
+      "plugin:import/errors",
+      "plugin:import/warnings",
+      "plugin:jsx-a11y/recommended",
       "airbnb",
       "react-app",
+      "plugin:react-hooks/recommended",
       "prettier"
     ],
     "parserOptions": {
@@ -36,6 +41,7 @@
     },
     "plugins": [
       "import",
+      "jsx-a11y",
       "prettier"
     ],
     "rules": {
@@ -55,7 +61,7 @@
     ]
   },
   "devDependencies": {
-    "eslint": "^7.7.0",
+    "eslint": "^6.6.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",

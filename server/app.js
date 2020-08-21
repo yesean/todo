@@ -26,8 +26,8 @@ mongoose
 app.use(express.json());
 app.use(cors());
 
-app.use(middleware.verifyToken);
-app.use(middleware.verifyTodo);
+// app.use(middleware.verifyToken);
+// app.use(middleware.verifyTodo);
 app.use('/api/todos', todosRouter);
 
 app.use(middleware.errorHandler);

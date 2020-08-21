@@ -9,9 +9,8 @@ const LoginPage = ({ setIsAuthenticated }) => {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    axios.get(`${server}/login`).then(response => {
-      
-    })
+    // axios.get(`${server}/login`).then(response => { 
+    // })
   }, []);
 
   const handleUsernameChange = (e) => {

@@ -3,12 +3,13 @@ const Todo = require('../models/todo');
 
 // get all todos
 todosRouter.get('/', (req, res) => {
-  jwt.verify(req.token, privateKey, (error, decoded) => {
-    if (error) {
-      return res.sendStatus(403);
-    }
-    return Todo.find({}).then((todos) => res.json(todos));
-  });
+  // jwt.verify(req.token, privateKey, (error, decoded) => {
+  //   if (error) {
+  //     return res.sendStatus(403);
+  //   }
+  //   return Todo.find({}).then((todos) => res.json(todos));
+  // });
+  return Todo.find({}).then((todos) => res.json(todos));
 });
 
 // get specific todo based on id
@@ -27,8 +28,6 @@ todosRouter.delete('/:id', (req, res, next) => {
     .then((result) => res.status(204).end())
     .catch((error) => next(error));
 });
-
-
 
 // insert new todo
 todosRouter.post('/', async (req, res) => {
