@@ -13,20 +13,17 @@ const useStyles = makeStyles({
   },
 });
 
-const Login = ({ setIsAuthenticated, setUser }) => {
+const Login = ({ setUser }) => {
   const classes = useStyles();
   return (
     <Container maxWidth="sm" classes={{ root: classes.root }}>
       <Router>
         <Switch>
           <Route path="/login">
-            <LoginPage
-              setUser={setUser}
-              setIsAuthenticated={setIsAuthenticated}
-            />
+            <LoginPage setUser={setUser} />
           </Route>
-          <Route path="/create">
-            <CreateAccount setIsAuthenticated={setIsAuthenticated} />
+          <Route path="/create-account">
+            <CreateAccount />
           </Route>
         </Switch>
       </Router>
