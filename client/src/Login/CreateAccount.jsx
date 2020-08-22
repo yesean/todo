@@ -46,7 +46,7 @@ const CreateAccount = ({ setIsAuthenticated }) => {
         <Grid md item>
           <TextField
             error={Boolean(usernameError)}
-            label={usernameError || 'Create Username'}
+            label={usernameError || 'Username'}
             value={username}
             onChange={handleUsernameChange}
           />
@@ -54,7 +54,7 @@ const CreateAccount = ({ setIsAuthenticated }) => {
         <Grid md item>
           <TextField
             type="password"
-            label="Create Password"
+            label="Password"
             value={password}
             onChange={handlePasswordChange}
           />
