@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { TextField, Button, Grid } from '@material-ui/core';
 
-const CreateAccount = ({ setIsAuthenticated, setPage }) => {
+import userService from '../services/user';
+
+const CreateAccount = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
-  useEffect(() => {}, []);
+  const [usernameError, setUsernameError] = useState(null);
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -17,16 +17,22 @@ const CreateAccount = ({ setIsAuthenticated, setPage }) => {
     setPassword(e.target.value);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const item = localStorage.getItem('key');
-    if (item) {
-      console.log(item);
-    } else {
-      localStorage.setItem('key', 'benis');
+    try {
+      const newUser = await userService.createAccount({ username, password });
+      console.log('user', newUser, 'created!');
+      setUsername('');
+      setPassword('');
+    } catch (error) {
+      const errorMessage = error.data.error;
+      if (errorMessage.includes(`expected \`username\` to be unique`)) {
+        setUsernameError('Username taken');
+      } else if (errorMessage.includes(`Path \`username\` is required`)) {
+        setUsernameError('Username required');
+      }
+      console.error(error);
     }
-    console.log('submitting');
-    setIsAuthenticated(true);
   };
   return (
     <form onSubmit={handleFormSubmit}>
@@ -39,7 +45,8 @@ const CreateAccount = ({ setIsAuthenticated, setPage }) => {
       >
         <Grid md item>
           <TextField
-            label="Set Username"
+            error={Boolean(usernameError)}
+            label={usernameError || 'Create Username'}
             value={username}
             onChange={handleUsernameChange}
           />
@@ -47,7 +54,7 @@ const CreateAccount = ({ setIsAuthenticated, setPage }) => {
         <Grid md item>
           <TextField
             type="password"
-            label="Set Password"
+            label="Create Password"
             value={password}
             onChange={handlePasswordChange}
           />
@@ -59,7 +66,7 @@ const CreateAccount = ({ setIsAuthenticated, setPage }) => {
         </Grid>
         <Grid md item>
           <Link to="/login" style={{ textDecoration: 'none' }}>
-            <Button variant="contained" color="primary">
+            <Button variant="text" color="primary">
               Login
             </Button>
           </Link>

@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { TextField, Button, Grid } from '@material-ui/core';
+import loginService from '../services/login';
+import todoService from '../services/todo';
 
-const server = 'http://localhost:3001';
-const LoginPage = ({ setIsAuthenticated }) => {
+const LoginPage = ({ setIsAuthenticated, setUser }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoginInvalid, setisLoginInvalid] = useState(false);
 
-  useEffect(() => {
-    // axios.get(`${server}/login`).then(response => { 
-    // })
-  }, []);
+  useEffect(() => {}, []);
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -21,16 +19,18 @@ const LoginPage = ({ setIsAuthenticated }) => {
     setPassword(e.target.value);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const item = localStorage.getItem('key');
-    if (item) {
-      console.log(item);
-    } else {
-      localStorage.setItem('key', 'benis');
+    try {
+      const user = await loginService.login({ username, password });
+      todoService.setToken(user.token);
+      setUsername('');
+      setPassword('');
+      setUser({ username });
+      setIsAuthenticated(true);
+    } catch (error) {
+      setisLoginInvalid(true);
     }
-    console.log('submitting');
-    setIsAuthenticated(true);
   };
   return (
     <form onSubmit={handleFormSubmit}>
@@ -43,6 +43,7 @@ const LoginPage = ({ setIsAuthenticated }) => {
       >
         <Grid md item>
           <TextField
+            error={isLoginInvalid}
             label="Username"
             value={username}
             onChange={handleUsernameChange}
@@ -50,6 +51,7 @@ const LoginPage = ({ setIsAuthenticated }) => {
         </Grid>
         <Grid md item>
           <TextField
+            error={isLoginInvalid}
             type="password"
             label="Password"
             value={password}
@@ -63,7 +65,7 @@ const LoginPage = ({ setIsAuthenticated }) => {
         </Grid>
         <Grid md item>
           <Link to="/create" style={{ textDecoration: 'none' }}>
-            <Button variant="contained" color="primary">
+            <Button variant="text" color="primary">
               Create Account
             </Button>
           </Link>
