@@ -61,15 +61,15 @@ const TodoList = ({ todoList, handleTodoChange, updateTodo, deleteTodo }) => {
   };
 
   const handleToggleTodo = (e, todo) => {
-    if (!todoList.some((todo) => todo.duplicate)) {
-      updateTodo(todo.id, { finished: !todo.finished });
+    if (!todoList.some((t) => t.duplicate)) {
+      updateTodo({ ...todo, finished: !todo.finished });
     }
   };
 
   const handleSubmitTodo = (e, todo) => {
     e.preventDefault();
     if (!todo.duplicate) {
-      updateTodo(todo.id)
+      updateTodo(todo)
         .then((res) => {
           document.activeElement.blur();
         })
@@ -143,7 +143,7 @@ const TodoList = ({ todoList, handleTodoChange, updateTodo, deleteTodo }) => {
           </Tooltip>
           <Tooltip title="Delete" classes={{ tooltip: classes.Tooltip }}>
             <IconButton
-              color="secondary"
+              color="primary"
               aria-label="delete"
               onClick={(e) => handleDeleteTodo(e, todo)}
             >
