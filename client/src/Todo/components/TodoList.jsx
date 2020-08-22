@@ -107,7 +107,7 @@ const TodoList = ({ todoList, handleTodoChange, updateTodo, deleteTodo }) => {
               id={todo.content}
               classes={{ root: classes.Checkbox }}
               name="todo"
-              color="primary"
+              color="secondary"
               checked={todo.finished}
             />
           </Tooltip>
