@@ -82,6 +82,19 @@ todosRouter.post('/', async (req, res) => {
 todosRouter.put('/:id', async (req, res, next) => {
   const { body } = req;
   const { id } = req.params;
+  const token = getTokenFrom(req);
+
+  const decodedToken = jwt.verify(token, config.SECRET_KEY);
+  if (!token || !decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' });
+  }
+
+  const user = await User.findById(decodedToken.id);
+  const processedUser = JSON.parse(JSON.stringify(user));
+
+  if (processedUser.id !== decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' });
+  }
 
   const updatedTodo = {
     content: body.content,
@@ -90,7 +103,7 @@ todosRouter.put('/:id', async (req, res, next) => {
   };
 
   const todo = await Todo.findByIdAndUpdate(id, updatedTodo, { new: true });
-  return todo;
+  return res.json(todo);
 });
 
 module.exports = todosRouter;
