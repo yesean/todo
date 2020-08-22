@@ -4,12 +4,19 @@ import { TextField, Button, Grid } from '@material-ui/core';
 import loginService from '../services/login';
 import todoService from '../services/todo';
 
-const LoginPage = ({ setIsAuthenticated, setUser }) => {
+const LoginPage = ({ setUser }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoginInvalid, setisLoginInvalid] = useState(false);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const loggedInUserJSON = window.localStorage.getItem('loggedInTodoAppUser');
+    if (loggedInUserJSON) {
+      const user = JSON.parse(loggedInUserJSON);
+      setUser(user);
+      todoService.setToken(user.token);
+    }
+  }, [setUser]);
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -23,11 +30,11 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
     e.preventDefault();
     try {
       const user = await loginService.login({ username, password });
+      window.localStorage.setItem('loggedInTodoAppUser', JSON.stringify(user));
       todoService.setToken(user.token);
       setUsername('');
       setPassword('');
       setUser({ username });
-      setIsAuthenticated(true);
     } catch (error) {
       setisLoginInvalid(true);
     }
@@ -64,7 +71,7 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
           </Button>
         </Grid>
         <Grid md item>
-          <Link to="/create" style={{ textDecoration: 'none' }}>
+          <Link to="/create-account" style={{ textDecoration: 'none' }}>
             <Button variant="text" color="primary">
               Create Account
             </Button>
