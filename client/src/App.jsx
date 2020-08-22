@@ -23,16 +23,22 @@ const theme = createMuiTheme({
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <Redirect to={!isAuthenticated ? '/login' : '/todos'} />
         <Switch>
           <Route path="/login">
-            <Login setIsAuthenticated={setIsAuthenticated} />
+            <Login setUser={setUser} setIsAuthenticated={setIsAuthenticated} />
           </Route>
           <Route path="/todos">
-            <Todo />
+            <Todo
+              user={user}
+              setUser={setUser}
+              setIsAuthenticated={setIsAuthenticated}
+            />
           </Route>
         </Switch>
       </Router>
