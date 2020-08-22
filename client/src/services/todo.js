@@ -22,7 +22,6 @@ const create = async (todo) => {
 const update = async (todo) => {
   const config = { headers: { Authorization: token } };
   const res = await axios.put(`${baseUrl}/${todo.id}`, todo, config);
-  console.log(res, res.data);
   return res.data;
 };
 
