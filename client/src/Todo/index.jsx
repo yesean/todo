@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { endOfDay, isEqual, compareAsc, parseJSON } from 'date-fns';
 import { Container } from '@material-ui/core';
 
 import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
 import './styles/index.css';
+import todoService from '../services/todo';
 
-const server = 'http://localhost:3001';
-
-const Todo = () => {
+const Todo = ({ user, setUser, setIsAuthenticated }) => {
   const [todoList, setTodoList] = useState([]);
   const [todoForm, setTodoForm] = useState({
     content: '',
@@ -19,12 +17,18 @@ const Todo = () => {
 
   // initially fetch todos
   useEffect(() => {
-    axios.get(`${server}/api/todos`).then((res) => {
-      let nextTodoList = parseDates(res.data);
-      nextTodoList = sortTodoList(nextTodoList);
-      setTodoList(nextTodoList);
-    });
-  }, []);
+    const fetchTodos = async () => {
+      const todos = await todoService.getAll();
+      setTodoList(
+        sortTodoList(
+          parseDates(todos.filter((t) => t.user.username === user.username))
+        )
+      );
+    };
+    if (user) {
+      fetchTodos();
+    }
+  }, [user]);
 
   // deserialize dates
   const parseDates = (todos) => {
@@ -73,80 +77,87 @@ const Todo = () => {
     return [...finishedTodoList, ...unfinishedTodoList];
   };
 
+  // mark duplicate todos
+  const markDuplicateTodos = () => {
+    setTodoList((prevTodoList) => {
+      const nextTodoList = [...prevTodoList];
+      const dupTodo = nextTodoList.findIndex(
+        (todo) =>
+          isDuplicateTodo(todo, { ...todoForm, id: -1 }) ||
+          nextTodoList.some((otherTodo) => isDuplicateTodo(todo, otherTodo))
+      );
+      if (dupTodo !== -1) {
+        const otherDupTodo = nextTodoList.findIndex((todo) =>
+          isDuplicateTodo(todo, nextTodoList[dupTodo])
+        );
+        nextTodoList[dupTodo].duplicate = true;
+        if (otherDupTodo === -1) {
+          setTodoForm((prevTodoForm) => ({ ...prevTodoForm, error: true }));
+        } else {
+          nextTodoList[otherDupTodo].duplicate = true;
+        }
+      }
+      return nextTodoList;
+    });
+  };
+
   // remove todo from list
-  const deleteTodo = (todoToDelete) => {
-    axios.delete(`${server}/api/todos/${todoToDelete.id}`).then((res) => {
+  const deleteTodo = async (todoToDelete) => {
+    try {
+      await todoService.remove(todoToDelete);
       unsetDuplicates();
       setTodoList((prevTodoList) =>
         prevTodoList.filter((todo) => todo.id !== todoToDelete.id)
       );
-      setTodoList((prevTodoList) => {
-        const nextTodoList = [...prevTodoList];
-        const dupTodo = nextTodoList.findIndex(
-          (todo) =>
-            isDuplicateTodo(todo, { ...todoForm, id: -1 }) ||
-            nextTodoList.some((otherTodo) => isDuplicateTodo(todo, otherTodo))
-        );
-        if (dupTodo !== -1) {
-          const otherDupTodo = nextTodoList.findIndex((todo) =>
-            isDuplicateTodo(todo, nextTodoList[dupTodo])
-          );
-          nextTodoList[dupTodo].duplicate = true;
-          if (otherDupTodo === -1) {
-            setTodoForm((prevTodoForm) => ({ ...prevTodoForm, error: true }));
-          } else {
-            nextTodoList[otherDupTodo].duplicate = true;
-          }
-        }
-        return nextTodoList;
-      });
-    });
+      markDuplicateTodos();
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+      console.error(error.response);
+    }
   };
 
   // add new todo from form content
-  const addTodo = (props) => {
+  const addTodo = async (props) => {
     const newTodo = {
       ...props,
       finished: false,
     };
-    axios
-      .post(`${server}/api/todos/`, newTodo)
-      .then((res) => {
-        setTodoList((prevTodoList) =>
-          sortTodoList(parseDates([...prevTodoList, res.data]))
-        );
-        setTodoForm({
-          content: '',
-          dueDate: endOfDay(new Date()),
-          error: false,
-        });
-      })
-      .catch((error) => console.log(error.response));
+
+    try {
+      const savedTodo = await todoService.create(newTodo);
+      setTodoList((prevTodoList) =>
+        sortTodoList(parseDates([...prevTodoList, savedTodo]))
+      );
+      resetTodoForm();
+    } catch (error) {
+      console.error(error.response);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   };
 
   // update existing todo
-  const updateTodo = (id, nextProps) => {
-    const todoToUpdate = {
-      ...todoList.find((todo) => todo.id === id),
-      ...nextProps,
-    };
-    return axios
-      .put(`${server}/api/todos/${id}`, todoToUpdate)
-      .then((res) => {
-        setTodoList((prevTodoList) => {
-          const nextTodoList = [...prevTodoList];
-          const index = nextTodoList.findIndex((todo) => todo.id === id);
-          nextTodoList[index] = res.data;
-          return sortTodoList(parseDates(nextTodoList));
-        });
-        return Promise.resolve('success');
-      })
-      .catch((error) => {
-        console.log(error.response);
-        Promise.reject(error.response);
+  const updateTodo = async (newTodo) => {
+    try {
+      const savedTodo = await todoService.update(newTodo);
+      console.log(savedTodo);
+      setTodoList((prevTodoList) => {
+        const nextTodoList = prevTodoList.map((t) =>
+          t.id === savedTodo.id ? savedTodo : t
+        );
+        return sortTodoList(parseDates(nextTodoList));
       });
+      return Promise.resolve('success');
+    } catch (error) {
+      console.error(error.response);
+      setUser(null);
+      setIsAuthenticated(false);
+      return Promise.reject(error);
+    }
   };
 
+  // set all todos as non duplicates
   const unsetDuplicates = () => {
     setTodoList((prevTodoList) =>
       prevTodoList.map((t) => ({ ...t, duplicate: false }))
@@ -194,6 +205,14 @@ const Todo = () => {
         )
       );
     }
+  };
+
+  const resetTodoForm = () => {
+    setTodoForm({
+      content: '',
+      dueDate: endOfDay(new Date()),
+      error: false,
+    });
   };
 
   return (
