@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { endOfDay, isEqual, compareAsc, parseJSON } from 'date-fns';
-import { Container } from '@material-ui/core';
+import { Container, Grid, Button } from '@material-ui/core';
 
 import TodoList from './components/TodoList';
 import TodoForm from './components/TodoForm';
 import './styles/index.css';
 import todoService from '../services/todo';
 
-const Todo = ({ user, setUser, setIsAuthenticated }) => {
+const Todo = ({ user, setUser }) => {
   const [todoList, setTodoList] = useState([]);
   const [todoForm, setTodoForm] = useState({
     content: '',
@@ -112,7 +112,6 @@ const Todo = ({ user, setUser, setIsAuthenticated }) => {
       markDuplicateTodos();
     } catch (error) {
       setUser(null);
-      setIsAuthenticated(false);
       console.error(error.response);
     }
   };
@@ -133,7 +132,6 @@ const Todo = ({ user, setUser, setIsAuthenticated }) => {
     } catch (error) {
       console.error(error.response);
       setUser(null);
-      setIsAuthenticated(false);
     }
   };
 
@@ -141,7 +139,6 @@ const Todo = ({ user, setUser, setIsAuthenticated }) => {
   const updateTodo = async (newTodo) => {
     try {
       const savedTodo = await todoService.update(newTodo);
-      console.log(savedTodo);
       setTodoList((prevTodoList) => {
         const nextTodoList = prevTodoList.map((t) =>
           t.id === savedTodo.id ? savedTodo : t
@@ -152,7 +149,6 @@ const Todo = ({ user, setUser, setIsAuthenticated }) => {
     } catch (error) {
       console.error(error.response);
       setUser(null);
-      setIsAuthenticated(false);
       return Promise.reject(error);
     }
   };
@@ -229,6 +225,18 @@ const Todo = ({ user, setUser, setIsAuthenticated }) => {
           todoForm={todoForm}
           handleTodoFormChange={handleTodoFormChange}
         />
+        <Grid container justify="center">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              window.localStorage.removeItem('loggedInTodoAppUser');
+              setUser(null);
+            }}
+          >
+            Log Out
+          </Button>
+        </Grid>
       </Container>
     </div>
   );
