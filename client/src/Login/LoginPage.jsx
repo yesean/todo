@@ -7,7 +7,8 @@ import todoService from '../services/todo';
 const LoginPage = ({ setUser }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoginInvalid, setisLoginInvalid] = useState(false);
+  const [isUsernameValid, setIsUsernameValid] = useState(true);
+  const [isPasswordValid, setIsPasswordValid] = useState(true);
 
   useEffect(() => {
     const loggedInUserJSON = window.localStorage.getItem('loggedInTodoAppUser');
@@ -28,6 +29,8 @@ const LoginPage = ({ setUser }) => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setIsUsernameValid(true);
+    setIsPasswordValid(true);
     try {
       const user = await loginService.login({ username, password });
       window.localStorage.setItem('loggedInTodoAppUser', JSON.stringify(user));
@@ -36,7 +39,12 @@ const LoginPage = ({ setUser }) => {
       setPassword('');
       setUser({ username });
     } catch (error) {
-      setisLoginInvalid(true);
+      const errorMessage = error.data.error;
+      if (errorMessage === 'invalid username') {
+        setIsUsernameValid(false);
+      } else if (errorMessage === 'invalid password') {
+        setIsPasswordValid(false);
+      }
     }
   };
   return (
@@ -46,36 +54,56 @@ const LoginPage = ({ setUser }) => {
         direction="column"
         alignItems="center"
         justify="center"
-        spacing={3}
+        spacing={8}
       >
-        <Grid md item>
-          <TextField
-            error={isLoginInvalid}
-            label="Username"
-            value={username}
-            onChange={handleUsernameChange}
-          />
+        <Grid
+          container
+          item
+          direction="column"
+          justify="center"
+          alignItems="center"
+          spacing={1}
+        >
+          <Grid md item>
+            <TextField
+              error={!isUsernameValid}
+              helperText={!isUsernameValid && 'Invalid Username'}
+              label="Username"
+              value={username}
+              onChange={handleUsernameChange}
+            />
+          </Grid>
+          <Grid md item>
+            <TextField
+              error={!isPasswordValid}
+              helperText={!isPasswordValid && 'Invalid Password'}
+              type="password"
+              label="Password"
+              value={password}
+              onChange={handlePasswordChange}
+            />
+          </Grid>
         </Grid>
-        <Grid md item>
-          <TextField
-            error={isLoginInvalid}
-            type="password"
-            label="Password"
-            value={password}
-            onChange={handlePasswordChange}
-          />
-        </Grid>
-        <Grid md item>
-          <Button type="submit" variant="contained" color="secondary">
-            Login
-          </Button>
-        </Grid>
-        <Grid md item>
-          <Link to="/create-account" style={{ textDecoration: 'none' }}>
-            <Button variant="text" color="primary">
-              Create Account
+        <Grid
+          container
+          item
+          direction="column"
+          justify="center"
+          alignItems="center"
+          spacing={2}
+        >
+          <Grid md item>
+            <Button type="submit" variant="contained" color="secondary">
+              Login
             </Button>
-          </Link>
+          </Grid>
+          <Grid md item>
+            <Link to="/create-account" style={{ textDecoration: 'none' }}>
+              <Button variant="text" color="primary">
+                Create Account
+              </Button>
+            </Link>
+          </Grid>
         </Grid>
       </Grid>
     </form>

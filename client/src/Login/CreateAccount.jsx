@@ -26,10 +26,12 @@ const CreateAccount = ({ setIsAuthenticated }) => {
       setPassword('');
     } catch (error) {
       const errorMessage = error.data.error;
-      if (errorMessage.includes(`expected \`username\` to be unique`)) {
-        setUsernameError('Username taken');
-      } else if (errorMessage.includes(`Path \`username\` is required`)) {
-        setUsernameError('Username required');
+      if (errorMessage) {
+        if (errorMessage.includes(`expected \`username\` to be unique`)) {
+          setUsernameError('Username taken');
+        } else if (errorMessage.includes(`Path \`username\` is required`)) {
+          setUsernameError('Username required');
+        }
       }
       console.error(error);
     }
