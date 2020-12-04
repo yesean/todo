@@ -20,7 +20,8 @@ const Login = ({ setUser }) => {
       <Router>
         <Switch>
           <Route path="/login">
-            <LoginPage setUser={setUser} />
+            <LoginPage setUser={setUser}
+            />
           </Route>
           <Route path="/create-account">
             <CreateAccount />
