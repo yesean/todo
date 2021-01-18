@@ -3,6 +3,7 @@ const express = require('express');
 require('express-async-errors');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 const logger = require('./utils/logger');
 const middleware = require('./utils/middleware');
 const todosRouter = require('./controllers/todos');
@@ -29,6 +30,11 @@ mongoose
 
 app.use(express.json());
 app.use(cors());
+
+app.use(express.static(path.join(__dirname, 'build')));
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.use('/api/users', usersRouter);
 app.use('/api/todos', todosRouter);
