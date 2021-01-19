@@ -23,8 +23,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "deploy": "rm -rf build && yarn build && cp -r build ../server"
+    "eject": "react-scripts eject"
   },
   "browserslist": {
     "production": [

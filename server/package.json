@@ -6,7 +6,9 @@
   "scripts": {
     "start": "NODE_ENV=production node index.js",
     "dev": "NODE_ENV=development nodemon index.js",
-    "test": "NODE_ENV=test jest --verbose --runInBand"
+    "test": "NODE_ENV=test jest --verbose --runInBand",
+    "build:ui": "rm -rf build && cd ../client && yarn build && cp -r build ../server",
+    "deploy": "git push heroku heroku"
   },
   "author": "",
   "license": "ISC",
